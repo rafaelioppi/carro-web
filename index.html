@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <title>Cadastro e Listagem de Carros</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body class="bg-light">
+  <div class="container py-5">
+    <div class="row">
+      <!-- Formulário -->
+      <div class="col-md-5">
+        <div class="card shadow-sm mb-4">
+          <div class="card-header bg-primary text-white">
+            <h5 class="mb-0">Cadastrar Carro</h5>
+          </div>
+          <div class="card-body">
+            <form id="carroForm">
+              <div class="mb-3">
+                <label class="form-label">Modelo</label>
+                <input type="text" id="modelo" class="form-control" required>
+              </div>
+              <div class="mb-3">
+                <label class="form-label">Marca</label>
+                <input type="text" id="marca" class="form-control" required>
+              </div>
+              <div class="mb-3">
+                <label class="form-label">Ano</label>
+                <input type="number" id="ano" class="form-control" required>
+              </div>
+              <div class="mb-3">
+                <label class="form-label">Preço</label>
+                <input type="number" step="0.01" id="preco" class="form-control" required>
+              </div>
+              <button type="submit" class="btn btn-success w-100">Salvar</button>
+            </form>
+            <div id="mensagem" class="mt-3"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tabela de carros -->
+      <div class="col-md-7">
+        <div class="card shadow-sm">
+          <div class="card-header bg-secondary text-white">
+            <h5 class="mb-0">Lista de Carros</h5>
+          </div>
+          <div class="card-body">
+            <table class="table table-bordered table-striped" id="tabelaCarros">
+              <thead>
+                <tr>
+                  <th>Modelo</th>
+                  <th>Marca</th>
+                  <th>Ano</th>
+                  <th>Preço</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const form = document.getElementById('carroForm');
+    const mensagem = document.getElementById('mensagem');
+    const tabela = document.querySelector('#tabelaCarros tbody');
+
+     const API_URL = 'https://special-journey-v6vrv5wv46qghwp9j-3335.app.github.dev/carros';
+
+    // Enviar novo carro
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const carro = {
+        modelo: document.getElementById('modelo').value,
+        marca: document.getElementById('marca').value,
+        ano: parseInt(document.getElementById('ano').value),
+        preco: parseFloat(document.getElementById('preco').value)
+      };
+
+      try {
+        const response = await fetch(API_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(carro)
+        });
+
+        if (response.ok) {
+          mensagem.innerHTML = `<div class="alert alert-success">Carro cadastrado com sucesso!</div>`;
+          form.reset();
+          carregarCarros();
+        } else {
+          mensagem.innerHTML = `<div class="alert alert-danger">Erro ao cadastrar carro.</div>`;
+        }
+      } catch (error) {
+        mensagem.innerHTML = `<div class="alert alert-warning">Erro de conexão com a API.</div>`;
+      }
+    });
+
+    // Carregar lista de carros
+    async function carregarCarros() {
+      try {
+        const response = await fetch(API_URL);
+        const carros = await response.json();
+
+        tabela.innerHTML = '';
+        carros.forEach(carro => {
+          const linha = `
+            <tr>
+              <td>${carro.modelo}</td>
+              <td>${carro.marca}</td>
+              <td>${carro.ano}</td>
+              <td>R$ ${carro.preco.toFixed(2)}</td>
+            </tr>
+          `;
+          tabela.innerHTML += linha;
+        });
+      } catch (error) {
+        tabela.innerHTML = `<tr><td colspan="4">Erro ao carregar carros.</td></tr>`;
+      }
+    }
+
+    // Inicializar
+    carregarCarros();
+  </script>
+</body>
+</html>
