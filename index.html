@@ -54,6 +54,7 @@
                   <th>Marca</th>
                   <th>Ano</th>
                   <th>Preço</th>
+                  <th>Ações</th>
                 </tr>
               </thead>
               <tbody></tbody>
@@ -69,9 +70,9 @@
     const mensagem = document.getElementById('mensagem');
     const tabela = document.querySelector('#tabelaCarros tbody');
 
-     const API_URL = 'https://special-journey-v6vrv5wv46qghwp9j-3335.app.github.dev/carros';
+    const API_URL = 'https://special-journey-v6vrv5wv46qghwp9j-3335.app.github.dev/carros';
 
-    // Enviar novo carro
+    // Enviar novo carro ou atualizar existente
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
 
@@ -82,19 +83,24 @@
         preco: parseFloat(document.getElementById('preco').value)
       };
 
+      const id = form.getAttribute('data-id');
+      const method = id ? 'PUT' : 'POST';
+      const url = id ? `${API_URL}/${id}` : API_URL;
+
       try {
-        const response = await fetch(API_URL, {
-          method: 'POST',
+        const response = await fetch(url, {
+          method,
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(carro)
         });
 
         if (response.ok) {
-          mensagem.innerHTML = `<div class="alert alert-success">Carro cadastrado com sucesso!</div>`;
+          mensagem.innerHTML = `<div class="alert alert-success">Carro ${id ? 'atualizado' : 'cadastrado'} com sucesso!</div>`;
           form.reset();
+          form.removeAttribute('data-id');
           carregarCarros();
         } else {
-          mensagem.innerHTML = `<div class="alert alert-danger">Erro ao cadastrar carro.</div>`;
+          mensagem.innerHTML = `<div class="alert alert-danger">Erro ao ${id ? 'atualizar' : 'cadastrar'} carro.</div>`;
         }
       } catch (error) {
         mensagem.innerHTML = `<div class="alert alert-warning">Erro de conexão com a API.</div>`;
@@ -115,13 +121,43 @@
               <td>${carro.marca}</td>
               <td>${carro.ano}</td>
               <td>R$ ${carro.preco.toFixed(2)}</td>
+              <td>
+                <button class="btn btn-sm btn-warning me-1" onclick='editarCarro(${JSON.stringify(carro)})'>Editar</button>
+                <button class="btn btn-sm btn-danger" onclick="excluirCarro(${carro.id})">Excluir</button>
+              </td>
             </tr>
           `;
           tabela.innerHTML += linha;
         });
       } catch (error) {
-        tabela.innerHTML = `<tr><td colspan="4">Erro ao carregar carros.</td></tr>`;
+        tabela.innerHTML = `<tr><td colspan="5">Erro ao carregar carros.</td></tr>`;
       }
+    }
+
+    // Excluir carro
+    async function excluirCarro(id) {
+      if (!confirm("Tem certeza que deseja excluir este carro?")) return;
+
+      try {
+        const response = await fetch(`${API_URL}/${id}`, { method: 'DELETE' });
+        if (response.ok) {
+          mensagem.innerHTML = `<div class="alert alert-info">Carro excluído com sucesso.</div>`;
+          carregarCarros();
+        } else {
+          mensagem.innerHTML = `<div class="alert alert-danger">Erro ao excluir carro.</div>`;
+        }
+      } catch (error) {
+        mensagem.innerHTML = `<div class="alert alert-warning">Erro de conexão com a API.</div>`;
+      }
+    }
+
+    // Editar carro
+    function editarCarro(carro) {
+      document.getElementById('modelo').value = carro.modelo;
+      document.getElementById('marca').value = carro.marca;
+      document.getElementById('ano').value = carro.ano;
+      document.getElementById('preco').value = carro.preco;
+      form.setAttribute('data-id', carro.id);
     }
 
     // Inicializar
